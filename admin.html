@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Painel da loja</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#ECEDF0;color:#1A1A22;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{position:sticky;top:0;z-index:5;background:#5B2FD0;color:#fff;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header b{font-size:1.1rem;flex:1}
+#st{font-size:.9rem;opacity:.95}
+nav{display:flex;gap:8px;padding:12px 16px;flex-wrap:wrap}
+nav button{background:#fff;border:2px solid #5B2FD0;color:#5B2FD0;border-radius:99px;padding:7px 16px;font-weight:700;cursor:pointer}
+nav button.on{background:#5B2FD0;color:#fff}
+main{max-width:860px;margin:0 auto;padding:0 16px 80px}
+button{font:inherit;cursor:pointer}
+.b{background:#F26B1D;color:#1A1A22;border:0;border-radius:10px;padding:9px 14px;font-weight:700}
+.b.s{background:#fff;color:#1A1A22;border:1px solid #BBB;padding:5px 10px}
+.b.d{background:#fff;color:#B3261E;border:1px solid #B3261E;padding:5px 10px}
+.box{background:#fff;border-radius:14px;padding:16px;margin:14px 0;border-left:8px solid var(--c,#5B2FD0)}
+label{display:block;font-weight:600;font-size:.9rem;margin:10px 0 0}
+input,textarea,select{width:100%;font:inherit;padding:8px 10px;border:1px solid #BBB;border-radius:8px;background:#fff;margin-top:3px}
+input[type=color]{height:42px;padding:2px;width:90px}
+input[type=checkbox]{width:auto;margin:0 8px 0 0}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:160px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ck{display:flex;align-items:center;padding:4px 0;font-weight:400}
+.th{width:120px;height:90px;object-fit:cover;border-radius:10px;background:#ddd;display:block;margin-bottom:6px}
+.hint{color:#555B68;font-size:.9rem}
+</style>
+</head>
+<body>
+<header><b>Painel da loja</b><span id="st"></span><button class="b" id="sv" style="display:none">Salvar no GitHub</button></header>
+<nav id="nv"></nav>
+<main id="m"></main>
+<script>
+var D,sha,T='geral',dirt=false,loc={};
+var C=JSON.parse(localStorage.getItem('gh')||'{}');
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function uid(){return Math.random().toString(36).slice(2,8)}
+function st(t){$('#st').textContent=t}
+function enc(s){return btoa(unescape(encodeURIComponent(s)))}
+function dec(s){return decodeURIComponent(escape(atob(s)))}
+function api(path,o){
+  o=o||{};var h={Authorization:'Bearer '+C.t,Accept:'application/vnd.github+json'};
+  if(o.body){h['Content-Type']='application/json';o.body=JSON.stringify(o.body)}
+  o.headers=h;o.cache='no-store';
+  return fetch('https://api.github.com/repos/'+C.o+'/'+C.r+'/contents/'+path,o).then(function(r){
+    return r.json().then(function(j){if(!r.ok)throw new Error(j.message||r.status);return j})});
+}
+function fail(e){st('Erro: '+e.message);alert('Erro: '+e.message)}
+function dirty(){dirt=true;st('Alterações não salvas')}
+window.onbeforeunload=function(){return dirt?'Há alterações não salvas.':undefined};
+
+function load(){
+  st('Carregando...');
+  api('data.json?ref='+encodeURIComponent(C.b)).then(function(j){
+    sha=j.sha;D=JSON.parse(dec(j.content));$('#sv').style.display='';st('Conectado');nav();show();
+  }).catch(fail);
+}
+$('#sv').onclick=function(){
+  st('Salvando...');
+  api('data.json',{method:'PUT',body:{message:'Atualiza catálogo',content:enc(JSON.stringify(D,null,1)),sha:sha,branch:C.b}})
+  .then(function(j){sha=j.content.sha;dirt=false;st('Salvo. O site atualiza em cerca de 1 minuto.')}).catch(fail);
+};
+
+function nav(){
+  var t=[['geral','Geral'],['heroes','Heroes'],['cats','Categorias'],['prods','Produtos'],['conn','Conexão']];
+  $('#nv').innerHTML=t.map(function(x){return '<button data-t="'+x[0]+'" class="'+(T==x[0]?'on':'')+'">'+x[1]+'</button>'}).join('');
+}
+$('#nv').onclick=function(e){var b=e.target.closest('button');if(b){T=b.getAttribute('data-t');nav();show()}};
+
+function inp(p,l,v,type){return '<label>'+l+'<input data-p="'+p+'" type="'+(type||'text')+'" value="'+esc(v)+'"></label>'}
+function area(p,l,v){return '<label>'+l+'<textarea rows="2" data-p="'+p+'">'+esc(v)+'</textarea></label>'}
+function acts(l,i){return '<div class="bar"><button class="b s" data-a="up" data-l="'+l+'" data-i="'+i+'">↑ Subir</button><button class="b s" data-a="down" data-l="'+l+'" data-i="'+i+'">↓ Descer</button>'+(l=='heroes'?'':'<button class="b d" data-a="del" data-l="'+l+'" data-i="'+i+'">Excluir</button>')+'</div>'}
+
+function show(){
+  var h='';
+  if(T=='conn'||!D){
+    h='<div class="box"><h2>Conexão com o GitHub</h2><p class="hint">O token fica salvo só neste navegador. Use um token restrito ao repositório da loja, com permissão Contents: Read and write.</p>'+
+    '<label>Usuário do GitHub<input id="co" value="'+esc(C.o||'')+'"></label><label>Repositório<input id="cr" value="'+esc(C.r||'')+'"></label><label>Branch<input id="cb" value="'+esc(C.b||'main')+'"></label><label>Token<input id="ct" type="password" value="'+esc(C.t||'')+'"></label>'+
+    '<div class="bar"><button class="b" id="cc">Conectar</button></div></div>';
+  }else if(T=='geral'){
+    h='<div class="box"><h2>Loja</h2>'+inp('nome','Nome da loja',D.nome)+inp('whatsapp','WhatsApp (país + DDD + número, só dígitos)',D.whatsapp)+
+    '<div class="row"><label>Cor laranja<input type="color" data-p="cor1" value="'+esc(D.cor1)+'"></label><label>Cor roxa<input type="color" data-p="cor2" value="'+esc(D.cor2)+'"></label></div>'+
+    inp('catTitulo','Título do catálogo',D.catTitulo)+area('catSub','Texto abaixo do título',D.catSub)+inp('rodape','Texto do rodapé',D.rodape)+'</div>';
+  }else if(T=='heroes'){
+    h=D.heroes.map(function(x,i){
+      return '<div class="box"><h3>Hero '+(i+1)+'</h3>'+inp('heroes.'+i+'.titulo','Título',x.titulo)+area('heroes.'+i+'.sub','Texto',x.sub)+inp('heroes.'+i+'.botao','Texto do botão',x.botao)+
+      '<label>Produtos em destaque (até 4 aparecem)</label>'+D.prods.map(function(p){return '<label class="ck"><input type="checkbox" data-h="'+i+'" value="'+esc(p.id)+'"'+(x.prods.indexOf(p.id)>-1?' checked':'')+'>'+esc(p.nome)+'</label>'}).join('')+acts('heroes',i)+'</div>';
+    }).join('');
+  }else if(T=='cats'){
+    h=D.cats.map(function(c,i){
+      return '<div class="box" style="--c:'+esc(c.cor)+'"><div class="row">'+inp('cats.'+i+'.nome','Nome',c.nome)+'<label>Cor<input type="color" data-p="cats.'+i+'.cor" value="'+esc(c.cor)+'"></label></div>'+acts('cats',i)+'</div>';
+    }).join('')+'<button class="b" data-a="addcat">+ Nova categoria</button>';
+  }else if(T=='prods'){
+    h=D.prods.map(function(p,i){
+      var src=p.img?(loc[p.img]||'https://raw.githubusercontent.com/'+C.o+'/'+C.r+'/'+C.b+'/'+p.img):'';
+      var c=D.cats.filter(function(x){return x.id==p.cat})[0];
+      return '<div class="box" style="--c:'+esc(c?c.cor:'#888')+'">'+(src?'<img class="th" src="'+esc(src)+'" alt="">':'<div class="th"></div>')+
+      '<label>Imagem (enviada direto ao GitHub)<input type="file" accept="image/*" data-i="'+i+'"></label>'+inp('prods.'+i+'.nome','Nome',p.nome)+area('prods.'+i+'.desc','Descrição',p.desc)+
+      '<div class="row">'+inp('prods.'+i+'.preco','Preço (R$)',p.preco,'number')+'<label>Categoria<select data-p="prods.'+i+'.cat">'+D.cats.map(function(x){return '<option value="'+esc(x.id)+'"'+(x.id==p.cat?' selected':'')+'>'+esc(x.nome)+'</option>'}).join('')+'</select></label></div>'+acts('prods',i)+'</div>';
+    }).join('')+'<button class="b" data-a="addprod">+ Novo produto</button>';
+  }
+  $('#m').innerHTML=h;
+}
+
+function setP(path,v){var a=path.split('.'),o=D;for(var i=0;i<a.length-1;i++)o=o[a[i]];o[a[a.length-1]]=v}
+$('#m').addEventListener('input',function(e){
+  var t=e.target,p=t.getAttribute('data-p');if(!p)return;
+  setP(p,t.type=='number'?(t.value===''?'':parseFloat(t.value)):t.value);dirty();
+});
+$('#m').addEventListener('change',function(e){
+  var t=e.target;
+  if(t.hasAttribute('data-h')){
+    var i=+t.getAttribute('data-h');
+    D.heroes[i].prods=[].slice.call(document.querySelectorAll('[data-h="'+i+'"]:checked')).map(function(x){return x.value});dirty();
+  }else if(t.type=='file'&&t.files[0]){send(+t.getAttribute('data-i'),t.files[0])}
+});
+function send(i,f){
+  var p=D.prods[i],im=new Image();
+  im.onload=function(){
+    var s=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');
+    c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    var du=c.toDataURL('image/jpeg',.85),n='images/'+p.id+'-'+Date.now()+'.jpg';
+    st('Enviando imagem...');
+    api(n,{method:'PUT',body:{message:'Imagem: '+p.nome,content:du.split(',')[1],branch:C.b}}).then(function(){
+      p.img=n;loc[n]=du;dirty();show();st('Imagem enviada. Clique em Salvar no GitHub.');
+    }).catch(fail);
+  };
+  im.src=URL.createObjectURL(f);
+}
+function mv(l,i,d){var a=D[l],j=i+d;if(j<0||j>=a.length)return;var t=a[i];a[i]=a[j];a[j]=t}
+$('#m').addEventListener('click',function(e){
+  var b=e.target.closest('[data-a]');
+  if(e.target.id=='cc'){
+    C={o:$('#co').value.trim(),r:$('#cr').value.trim(),b:$('#cb').value.trim()||'main',t:$('#ct').value.trim()};
+    localStorage.setItem('gh',JSON.stringify(C));T='geral';load();return;
+  }
+  if(!b)return;
+  var a=b.getAttribute('data-a'),l=b.getAttribute('data-l'),i=+b.getAttribute('data-i');
+  if(a=='up')mv(l,i,-1);
+  else if(a=='down')mv(l,i,1);
+  else if(a=='addcat')D.cats.push({id:uid(),nome:'Nova categoria',cor:'#5B2FD0'});
+  else if(a=='addprod'){if(!D.cats.length){alert('Crie uma categoria primeiro.');return}D.prods.push({id:uid(),nome:'Novo produto',desc:'',preco:'',cat:D.cats[0].id,img:''})}
+  else if(a=='del'){
+    if(l=='cats'){
+      var id=D.cats[i].id;
+      if(D.prods.some(function(p){return p.cat==id})){alert('Esta categoria ainda tem produtos. Mova ou exclua os produtos antes.');return}
+      if(!confirm('Excluir esta categoria?'))return;D.cats.splice(i,1);
+    }else{
+      if(!confirm('Excluir este produto?'))return;
+      var pid=D.prods[i].id;D.prods.splice(i,1);
+      D.heroes.forEach(function(h){h.prods=h.prods.filter(function(x){return x!=pid})});
+    }
+  }
+  dirty();show();
+});
+if(C.t&&C.o&&C.r){load()}else{show();nav()}
+</script>
+</body>
+</html>

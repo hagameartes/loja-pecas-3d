@@ -1,0 +1,27 @@
+{
+ "nome": "Camada3D",
+ "whatsapp": "5500900000000",
+ "cor1": "#F26B1D",
+ "cor2": "#5B2FD0",
+ "catTitulo": "Catálogo",
+ "catSub": "Escolha uma peça e peça direto pelo WhatsApp. Entrega e retirada na nossa região.",
+ "rodape": "Vendas e atendimento pelo WhatsApp.",
+ "cats": [
+  {"id": "casa", "nome": "Casa e organização", "cor": "#F26B1D"},
+  {"id": "deco", "nome": "Decoração", "cor": "#5B2FD0"},
+  {"id": "repo", "nome": "Peças de reposição", "cor": "#0E9AA7"}
+ ],
+ "prods": [
+  {"id": "p1", "nome": "Organizador de gavetas", "desc": "Módulos encaixáveis para talheres e ferramentas.", "preco": 30, "cat": "casa", "img": ""},
+  {"id": "p2", "nome": "Suporte de celular articulado", "desc": "Ajusta o ângulo para mesa ou bancada.", "preco": 25, "cat": "casa", "img": ""},
+  {"id": "p3", "nome": "Vaso geométrico", "desc": "Para suculentas e plantas pequenas.", "preco": 35, "cat": "deco", "img": ""},
+  {"id": "p4", "nome": "Chaveiro personalizado", "desc": "Com nome ou logo da sua marca.", "preco": 8, "cat": "deco", "img": ""},
+  {"id": "p5", "nome": "Engrenagem sob medida", "desc": "Reposição para eletrodomésticos e brinquedos.", "preco": 18, "cat": "repo", "img": ""},
+  {"id": "p6", "nome": "Botão de reposição", "desc": "Para fogão, máquina de lavar e outros aparelhos.", "preco": 12, "cat": "repo", "img": ""}
+ ],
+ "heroes": [
+  {"titulo": "Peças em 3D feitas para a sua região", "sub": "Escolha, chame no WhatsApp e combine entrega ou retirada.", "botao": "Ver catálogo", "prods": ["p1", "p2", "p3", "p4"]},
+  {"titulo": "Quebrou uma peça? A gente reproduz.", "sub": "Mande foto e medidas pelo WhatsApp e receba o valor.", "botao": "Ver peças de reposição", "prods": ["p5", "p6"]},
+  {"titulo": "Decoração impressa em 3D", "sub": "Vasos, chaveiros e presentes personalizados.", "botao": "Ver decoração", "prods": ["p3", "p4"]}
+ ]
+}
